@@ -1,0 +1,555 @@
+---
+title: "DATA605 Computational Mathematics"
+author: "Gabriella Martinez"
+date: "5/7/2021"
+output:
+    html_document:
+        theme: cerulean
+        highlight: kate
+        font-family: "Arial"
+        code_folding: "hide"
+---
+
+## Final Project {.tabset .tabset-pills}
+
+### Assignment Overview
+
+Your final is due by the end of the last week of class.  You should post your solutions to your GitHub account or RPubs.  You are also expected to make a short presentation via YouTube and post that recording to the board.  This project will show off your ability to understand the elements of the class.  
+
+**Problem 1**  
+Using R, generate a random variable X that has 10,000 random uniform numbers from 1 to N, where N can be any number of your choosing greater than or equal to 6.  Then generate a random variable Y that has 10,000 random normal numbers with a mean of $\mu = \sigma = \frac{N+1}{2}$.  
+  
+*Probability*   
+Calculate as a minimum the below probabilities a through c. Assume the small letter "x" is estimated as the median of the X variable, and the small letter "y" is estimated as the 1st quartile of the Y variable.  Interpret the meaning of all probabilities.  
+  
+*5 points*  
+$a. P(X>x \text{ | } X>y)$  
+$b. P(X>x \text{ , } Y>y)$  
+$c. P(X<x \text{ | } X>y)$  
+  
+*5 points*  
+Investigate whether $P(X>x \text{ and } Y>y)=P(X>x)P(Y>y)$ by building a table and evaluating the marginal and joint probabilities.  
+  
+*5 points*  
+Check to see if independence holds by using [Fisher’s Exact Test](https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/fisher.test) and the [Chi Square Test](https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/chisq.test).  What is the difference between the two? Which is most appropriate?  
+  
+  
+**Problem 2**  
+You are to register for Kaggle.com (free) and compete in the House Prices: [Advanced Regression Techniques Competition](https://www.kaggle.com/c/house-prices-advanced-regression-techniques). I want you to do the following:   
+  
+*5 points*    
+Descriptive and Inferential Statistics.  
+Provide univariate descriptive statistics and appropriate plots for the training data set.  Provide a scatterplot matrix for at least two of the independent variables and the dependent variable. Derive a correlation matrix for any three quantitative variables in the dataset.  Test the hypotheses that the correlations between each pairwise set of variables is 0 and provide an 80% confidence interval.  Discuss the meaning of your analysis.  Would you be worried about familywise error? Why or why not?   
+  
+*5 points*   
+Linear Algebra and Correlation.  
+Invert your correlation matrix from above. (This is known as the precision matrix and contains variance inflation factors on the diagonal.) Multiply the correlation matrix by the precision matrix, and then multiply the precision matrix by the correlation matrix. Conduct LU decomposition on the matrix.  
+  
+*5 points*  
+Calculus-Based Probability & Statistics.  
+Many times, it makes sense to fit a closed form distribution to data.  Select a variable in the Kaggle.com training dataset that is skewed to the right, shift it so that the minimum value is absolutely above zero if necessary.
+Then load the MASS package and run [fitdistr()](https://www.rdocumentation.org/packages/MASS/versions/7.3-54/topics/fitdistr) to fit an exponential probability density function.    
+Find the optimal value of $\lambda$ for this distribution, and then take 1000 samples from this exponential distribution using this value (e.g., rexp(1000, $\lambda$)).  
+Plot a histogram and compare it with a histogram of your original variable.
+Using the exponential pdf, find the 5th and 95th percentiles using the cumulative distribution function (CDF).
+Also generate a 95% confidence interval from the empirical data, assuming normality.
+Finally, provide the empirical 5th percentile and 95th percentile of the data.  Discuss.  
+  
+*10 points*  
+Modeling.  
+Build some type of multiple regression  model and submit your model to the competition board.  Provide your complete model summary and results with analysis.  Report your Kaggle.com user name and score.
+  
+### Problem 1  
+**Using R, generate a random variable X that has 10,000 random uniform numbers from 1 to N, where N can be any number of your choosing greater than or equal to 6.  Then generate a random variable Y that has 10,000 random normal numbers with a mean of $\mu = \sigma = \frac{N+1}{2}$.** ^[http://www.cookbook-r.com/Numbers/Generating_random_numbers/]  
+*5 points*  
+$a. P(X>x \text{ | } X>y)$  
+$b. P(X>x \text{ , } Y>y)$  
+$c. P(X<x \text{ | } X>y)$  
+  
+    
+**Random Variable X**
+```{r message=FALSE, warning=FALSE}
+library(ggplot2)
+#N=49
+set.seed(123) #for reproducibility
+N<-49
+X <- runif(10000, min = 1, max = N)
+#hist(X)
+X_df<- as.data.frame(X)
+ggplot(X_df,aes(x=X)) + 
+ geom_histogram(aes(y=..density..), colour="black", fill="white")+
+ geom_density(alpha=.2, fill="#FF6666")
+```
+  
+**Random Variable Y**
+```{r message=FALSE, warning=FALSE}
+#mean= standard deviation= (N+1)2= (50)/2= 25
+set.seed(1234)
+mu_sigma <- (N+1)/2
+Y <- rnorm(10000, mean=mu_sigma, sd=mu_sigma)
+#hist(Y)
+Y_df <-as.data.frame(Y)
+ggplot(Y_df,aes(x=Y)) + 
+ geom_histogram(aes(y=..density..), colour="black", fill="white")+
+ geom_density(alpha=.2, fill="#FF6666")
+```
+
+  
+**Probability**  
+**Calculate as a minimum the below probabilities a through c. Assume the small letter "x" is estimated as the median of the X variable, and the small letter "y" is estimated as the 1st quartile of the Y variable.  Interpret the meaning of all probabilities.**  
+
+```{r class.source = "fold-show"}
+x <- median(X)
+x
+```
+
+```{r class.source = "fold-show"}
+y <- quantile(Y, 0.25)
+y
+```
+
+
+*5 points*  
+$a. P(X>x \text{ | } X>y)$  
+$\text{Probability of X>x given X>y}$
+
+```{r}
+a1 <- sum(X>x)/10000
+#a1
+b1 <- sum(X>y)/10000
+#b1
+p1 <- (a1*b1)/b1
+p1
+```
+
+$b. P(X>x \text{ , } Y>y)$  
+$\text{Probability of X>x and Y>y}$
+```{r}
+a2 <- sum(X>x)/10000
+b2 <- sum(Y>y)/10000
+
+p2 <- a2*b2
+p2
+```
+
+$c. P(X<x \text{ | } X>y)$  
+$\text{Probability of X<x given X>y}$
+```{r}
+a3 <- sum(X<x)/10000
+b3 <- sum(X>y)/10000
+
+p3<- (a3*b3)/b3
+p3
+```
+  
+*5 points*  
+**Investigate whether $P(X>x \text{ and } Y>y)=P(X>x)P(Y>y)$ by building a table and evaluating the marginal and joint probabilities.**  
+  
+The marginal probabilities: `Y>y` is `TRUE` is `0.7500` and the probability that `X>x` is `FALSE` is `0.5000`.  
+
+Joint probability is given by cells which represent the simultaneous occurrence of two different events. For example, the probability that `X>x` is `TRUE` and `Y>y` is `TRUE` at the same time is `0.3749`.
+
+^[https://bookdown.org/gabriel_butler/ECON41Labs/tutorial-3-conditional-probability.html]
+```{r}
+basic_table <- addmargins(prop.table(table(X>x, 
+                                           Y>y, 
+                                           dnn = c('X>x', 'Y>y'))))
+basic_table
+```
+
+*5 points*  
+**Check to see if independence holds by using [Fisher’s Exact Test](https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/fisher.test) and the [Chi Square Test](https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/chisq.test).  What is the difference between the two? Which is most appropriate?**  
+  
+The difference between the Fisher’s Exact Test and the Chi Square Test is sample size as well as accuracy. Fisher's Exact Test is most appropriate when an expected frequency in any cell of the contingency table is less than 5. In contrast, the Chi-squared test is most appropriate for large sample sizes. The results of Fisher's Exact Test are, as the name suggests, exact whereas the results of a Chi-squared test are approximate. Since our sample size is large, the Chi Squared test is most appropriate.  
+A very small chi square test statistic means the observed data fits the expected data extremely well, in other words, there is a relationship. In our case, the chi squared value is `0.00053333` which suggests a relationship between the values.
+
+```{r message=FALSE, warning=FALSE}
+mtrx <- matrix(c(1249, 1251, 3751, 3749), ncol=2)
+mtrx
+
+ft <- fisher.test(mtrx)
+ft
+```
+Based on Fisher's exact test statistic value 0.9816, the result is not significant at p < .05.
+
+```{r}
+chisq.test(mtrx)
+```
+
+  
+^[https://statsandr.com/blog/fisher-s-exact-test-in-r-independence-test-for-a-small-sample/#ref-bower2003use]
+^[https://www.researchgate.net/publication/265026286_When_To_Use_Fisher's_Exact_Test#:~:text=Fisher's%20exact%20test%20(Bryan%20et,the%20types%20of%20drainage%20systems.]
+^[https://www.datascienceblog.net/post/statistical_test/contingency_table_tests/]
+  
+### Problem 2
+#### {.tabset}
+##### Task, Packages, and Data 
+You are to register for Kaggle.com (free) and compete in the House Prices: [Advanced Regression Techniques Competition](https://www.kaggle.com/c/house-prices-advanced-regression-techniques).
+
+Pacakges:
+```{r class.source = "fold-show", message=FALSE, warning=FALSE}
+library(RCurl)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(reactable)
+library(readr)
+library(tidyverse)
+library(pracma)
+library(matrixcalc)
+library(summarytools)
+library(kableExtra)
+library(stats)
+library(GGally)
+library(Rmisc)
+```
+
+Load the Data:
+```{r class.source = "fold-show", message=FALSE, warning=FALSE}
+test_url <- url("https://raw.githubusercontent.com/gabbypaola/DATA605/main/test.csv")
+test <- read_csv(test_url)
+train_url <- url("https://raw.githubusercontent.com/gabbypaola/DATA605/main/train.csv")
+train <- read_csv(train_url)
+```
+
+Now that we have loaded our data into R, we will take a `glimpse()` of the data to see how many rows and columns we as well as the variable names and respective data types for each. Both data sets are fairly large.
+
+```{r}
+dim(test)
+dim(train)
+```
+Below is a `glimpse()` of our `test` data set.
+```{r}
+glimpse(test)
+```
+
+Below is a `glimpse()` of our `train` data set.
+```{r}
+glimpse(train)
+```
+
+##### Descriptive and Inferential Statistics
+*5 points*  
+Provide univariate descriptive statistics and appropriate plots for the training data set. Provide a scatterplot matrix for at least two of the independent variables and the dependent variable. Derive a correlation matrix for any three quantitative variables in the dataset.  Test the hypotheses that the correlations between each pairwise set of variables is 0 and provide an 80% confidence interval.  Discuss the meaning of your analysis.  Would you be worried about familywise error? Why or why not?  
+
+
+**Provide univariate descriptive statistics and appropriate plots for the training data set.**^[https://cran.r-project.org/web/packages/summarytools/vignettes/Introduction.html#descr]  
+  
+[Plots from dfSummary() for Training data set ](https://htmlpreview.github.io/?https://github.com/gabbypaola/DATA605/blob/main/train_dfSummary.html)
+
+```{r message=FALSE, warning=FALSE}
+descr(train,
+  headings = FALSE, #remove headings
+  stats = "common",# most common descriptive statistics, default is all
+  transpose = TRUE #allows for better display due to large amount of variables
+  ) %>% 
+  kbl(caption = "Univariate Descriptive Statistics - Training Data Set") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+```
+  
+**Provide a scatterplot matrix for at least two of the independent variables and the dependent variable.**^[https://r-charts.com/correlation/ggpairs/]
+
+Independent Variables: `LotArea`, `GrLivArea`, `FullBath`  
+Dependent Variables: `SalePrice`
+
+```{r message=FALSE, warning=FALSE}
+ggpairs(train, 
+        columns = c('SalePrice','LotArea', 'GrLivArea', 'FullBath'), 
+        aes(alpha = 0.5), 
+        lower = list(continuous = "smooth"))
+```
+  
+**Derive a correlation matrix for any three quantitative variables in the dataset.** ^[https://r-graphics.org/recipe-miscgraph-corrmatrix#RECIPE-MISCGRAPH-CORRMATRIX]
+
+```{r message=FALSE, warning=FALSE}
+quant_vars <- train %>% 
+  select(c(81,5,47))
+
+corr_mtrx <- cor(quant_vars) %>% 
+  as.matrix()
+corr_mtrx
+```
+
+```{r message=FALSE, warning=FALSE}
+library(corrplot)
+corrplot(corr_mtrx)
+```
+
+
+  
+**Test the hypotheses that the correlations between each pairwise set of variables is 0 and provide an 80% confidence interval.  Discuss the meaning of your analysis.**
+
+
+`GrLivArea` and `SalePrice`
+```{r}
+cor.test(quant_vars$GrLivArea, quant_vars$SalePrice, conf.level = 0.8)
+```
+  
+`LotArea` and `SalePrice`
+```{r}
+cor.test(quant_vars$LotArea, quant_vars$SalePrice, conf.level = 0.8)
+```
+
+`GrLivArea` and `LotArea`
+```{r}
+cor.test(quant_vars$GrLivArea, quant_vars$LotArea, conf.level = 0.8)
+```
+
+  
+**Would you be worried about familywise error? Why or why not?**  
+
+The familywise error rate (FWE or FWER) is the probability of a coming to at least one false conclusion in a series of hypothesis tests . In other words, it’s the probability of making at least one Type I Error. The term “familywise” error rate comes from family of tests, which is the technical definition for a series of tests on data. ^[https://www.statisticshowto.com/familywise-error-rate/] 
+  
+The formula to estimate the familywise error rate is:  
+$FWE \le 1 – (1 – \alpha)^c$  
+$\alpha$ = alpha level for an individual test (e.g. .05),  
+c = Number of comparisons.  
+Alpha levels can be controlled by you and are related to confidence levels. To get $\alpha$ subtract your confidence level from 1. ^[https://www.statisticshowto.com/probability-and-statistics/statistics-definitions/what-is-an-alpha-level/]  
+  
+In our case, $\alpha$= 1-.80=.20
+This means that the probability of a type I error is just over 48.8%. There is a 48.8% chance that one of the 3 statistical analyses is going to reject the null hypothesis erroneously when it shouldn't have.
+  
+```{r}
+alpha <- 1-.80
+c <- 3
+FWE <- 1-(1-alpha)^c
+FWE
+```
+
+  
+##### Linear Algebra and Correlation
+*5 points*   
+Invert your correlation matrix from above. (This is known as the precision matrix and contains variance inflation factors on the diagonal.) Multiply the correlation matrix by the precision matrix, and then multiply the precision matrix by the correlation matrix. Conduct LU decomposition on the matrix.  
+
+**Invert correlation matrix.**
+```{r}
+prec_mtrx <- inv(corr_mtrx)
+prec_mtrx
+```
+
+  
+**Multiply the correlation matrix by the precision matrix.**
+```{r}
+corr_prec <- (corr_mtrx%*%prec_mtrx)
+corr_prec
+```
+  
+**Multiply the precision matrix by the correlation matrix.**
+```{r}
+prec_corr <- (prec_mtrx%*%corr_mtrx)
+prec_corr
+```
+  
+**Conduct LU decomposition on the matrix.**  
+Correlation Matrix
+```{r}
+decomp_corr <- lu.decomposition(corr_mtrx)
+decomp_corr
+```
+  
+Precision Matrix
+```{r}
+decomp_prec <- lu.decomposition(prec_mtrx)
+decomp_prec
+```
+
+Correlation matrix by Precision matrix
+```{r}
+decomp_corr_prec <- lu.decomposition(corr_prec)
+decomp_corr_prec
+```
+
+Precision matrix by Correlation matrix
+```{r}
+decomp_prec_corr <- lu.decomposition(prec_corr)
+decomp_prec_corr 
+```
+
+  
+##### Calculus-Based Probability & Statistics
+*5 points*  
+Many times, it makes sense to fit a closed form distribution to data.  
+  
+**Select a variable in the Kaggle.com training dataset that is skewed to the right, shift it so that the minimum value is absolutely above zero if necessary.** 
+
+
+**Then load the MASS package and run [fitdistr()](https://www.rdocumentation.org/packages/MASS/versions/7.3-54/topics/fitdistr) to fit an exponential probability density function.**
+```{r message=FALSE, warning=FALSE}
+#install.packages("MASS")
+library(MASS)
+fitted <- fitdistr(train$SalePrice, "exponential")
+fitted
+```
+
+**Find the optimal value of $\lambda$ for this distribution, and then take 1000 samples from this exponential distribution using this value (e.g., rexp(1000, $\lambda$)).**
+```{r}
+lambda = fitted$estimate
+lambda
+
+optimal_val = rexp(1000, lambda)
+head(optimal_val,10)
+opt_val_df <- as.data.frame(optimal_val)
+```
+
+**Plot a histogram and compare it with a histogram of your original variable.**
+```{r message=FALSE, warning=FALSE}
+ggplot(train, aes(x=SalePrice)) + 
+ geom_histogram(aes(y=..density..), colour="black", fill="white")+
+ geom_density(alpha=.2, fill="#FF6666")+
+  labs(title="Sale Price Distibution Histogram",x="Sale Price", y = "Density")
+
+ggplot(opt_val_df, aes(x=optimal_val)) + 
+ geom_histogram(aes(y=..density..), colour="black", fill="white")+
+ geom_density(alpha=.2, fill="#E69F00")+
+labs(title="Optimal Value Distribution Histogram",x="Optimal Value", y = "Density")
+```
+  
+**Using the exponential pdf, find the 5th and 95th percentiles using the cumulative distribution function (CDF).**
+```{r}
+#5th percentile
+qexp(0.05, rate = lambda)
+#95th percentile
+qexp(0.95, rate = lambda)
+```
+
+**Also generate a 95% confidence interval from the empirical data, assuming normality.**
+```{r}
+CI(train$SalePrice, ci=0.95)
+```
+
+**Finally, provide the empirical 5th percentile and 95th percentile of the data. Discuss.**  
+The 5^th^ percentile of the `SalePrice` means 5% of the house prices are less than \$88,000. The 95^th^ percentile of the `SalePrice` means 95% of the house prices are less than \$326,100.
+
+```{r}
+quantile(train$SalePrice, 0.05)
+quantile(train$SalePrice, 0.95)
+```
+
+  
+##### Modeling
+*10 points*  
+**Build some type of multiple regression  model and submit your model to the competition board.  Provide your complete model summary and results with analysis.  Report your Kaggle.com user name and score.**  
+
+In order to create my multiple regression model, I first needed to identify the predictor variables I wanted to use in my `lm()` function. To do so, I first wanted to extract the numerical variables from the `train` data set. Once that was done, ID column was removed as that doesn't have an impact on `SalePrice`.  
+Next step was to create a correlation matrix. A correlation plot was created, but given the large amount of variables that included both negative and positive correlation values for `SalePrice` initially used gives a weird looking plot that wasn't too useful. Next was filtering out the variables with negative correlation. Once that was done, my intent was to create another correlation plot, however since I removed the negative correlation variables, this made the correlation plot a bit wonky so it was also omitted. Also needed to rename columns due to numbers in the column name ^[https://www.datanovia.com/en/lessons/rename-data-frame-columns-in-r/].
+
+```{r}
+library(corrplot)
+
+num_train <- num_cols <- unlist(lapply(train, is.numeric)) #find only the numeric columns
+num_train_df <- train[, num_train] #make that into a dataframe
+num_train_df <- num_train_df[,2:38] #take out ID#
+num_train_df[complete.cases(num_train_df), ] #remove NAs
+
+num_corr <- cor(num_train_df) #make the correlation matrix
+#corrplot(num_corr)
+
+num_corr_df<- as.data.frame(num_corr) %>% #convert corr mtrx to dataframe 
+  filter(SalePrice > 0)  #weed out the negative correlations
+
+#get the variable names to do lm(SalePrice~vars)
+correlation_variables <- row.names(num_corr_df[1:24,]) 
+correlation_variables
+
+#change the names, getting error in the lm function with the #s
+names(train)[names(train) == "3SsnPorch"] <- "ThreeSsnPorch" 
+names(train)[names(train) == "1stFlrSF"] <- "FrstFlrSF"
+names(train)[names(train) == "2ndFlrSF"] <- "SecFlrSF"
+```
+  
+Now we are ready to create the multiple regression model using `lm()`. Based on our R^2^ value `0.7971` and small p-value `< 2.2e-16` from the `summary()` function, our model seems to be pretty good. Our model may be representative of about 79.7% of the data.  
+```{r}
+# price.lm<- lm(SalePrice ~ OverallQual+YearBuilt+
+#YearRemodAdd+TotalBsmtSF+ GrLivArea+FullBath+TotRmsAbvGrd #+GarageCars+GarageArea+FrstFlrSF+SecFlrSF, data=train)
+# 
+# summary(price.lm)
+
+price.lm<- lm(SalePrice ~ LotArea+OverallQual+ YearBuilt+YearRemodAdd+BsmtFinSF1   +BsmtUnfSF+ TotalBsmtSF+ GrLivArea +BsmtFullBath+FullBath+HalfBath  +BedroomAbvGr+TotRmsAbvGrd + Fireplaces+GarageCars+GarageArea+WoodDeckSF+OpenPorchSF +ScreenPorch+PoolArea+ThreeSsnPorch+FrstFlrSF+SecFlrSF, data=train)
+
+summary(price.lm)
+```
+  
+F-statistic: 245.2 on 23 and 1436 DF,  p-value: < 2.2e-16, given the small pvalue, which is much below 0.05 indicates the model has some level of validity.
+
+Multiple R-squared: 0.7971, Adjusted R-squared:  0.7938 - The model accounts for roughly 79.7% of the data’s variation.
+
+Residual standard error: In our example, the `SalePrice` can deviate from the true regression line by approximately 36070, on average.
+
+**Are the assumptions of simple linear regression met?**
+
+1. **Linearity**: The relationship between X and the mean of Y is not linear. Based on the Residuals vs. Fitted plot, the the red line exhibits a somewhat quadratic relationship and is not linear.  
+  
+2. **Homoscedasticity**: The variance of residual is not the same for any value of X. The Scale-Location plot shows the residuals are not spread equally along the ranges of predictor.  
+  
+3. **Independence**: Observations are not independent of each other. Upon examining the Residuals vs. Fitted plot, we can see a correlation between the variables.
+
+4. **Multivariate Normality**: The nearly normal residual condition seems to be met based on the histogram of residuals shown below.
+```{r}
+par(mfrow=c(2,2)) 
+plot(price.lm)
+```
+
+```{r}
+par(mfrow=c(1,1))
+# residuals histogram
+hist(price.lm$residuals, 
+     xlab = "Residuals", ylab = "", 
+     main = "Histogram of Residuals Distribution")
+```
+
+
+```{r}
+#change names to match train data set
+names(test)[names(test) == "3SsnPorch"] <- "ThreeSsnPorch" 
+names(test)[names(test) == "1stFlrSF"] <- "FrstFlrSF"
+names(test)[names(test) == "2ndFlrSF"] <- "SecFlrSF"
+
+#pick out the same columns from our lm from the test data set
+test_pred <- subset(test, select=c(LotArea ,OverallQual, YearBuilt,YearRemodAdd,BsmtFinSF1   ,BsmtUnfSF, TotalBsmtSF, GrLivArea ,BsmtFullBath,FullBath,HalfBath  ,BedroomAbvGr,TotRmsAbvGrd , Fireplaces,GarageCars,GarageArea,WoodDeckSF,OpenPorchSF ,ScreenPorch,PoolArea,ThreeSsnPorch,FrstFlrSF,SecFlrSF))
+
+# test_pred <- subset(test, select=c(OverallQual,YearBuilt,YearRemodAdd,TotalBsmtSF, GrLivArea,FullBath,TotRmsAbvGrd ,GarageCars,GarageArea,FrstFlrSF,SecFlrSF))
+
+test_pred <- na.omit(test_pred) #remove NAs
+
+pred_tst <- predict(price.lm, test_pred)
+summary(pred_tst)
+
+```
+
+
+```{r message=FALSE, warning=FALSE}
+pred_test_df <- as.data.frame(pred_tst) #create df for ggplot
+ggplot(pred_test_df, aes(x=pred_tst)) + 
+ geom_histogram(aes(y=..density..), colour="black", fill="white")+
+ geom_density(alpha=.2, fill="#E69F00")+
+labs(title="Testing set Histogram (Predicted Value)",x="Housing Sales Price", y = "Density")
+
+ggplot(train, aes(x=SalePrice)) + 
+ geom_histogram(aes(y=..density..), colour="black", fill="white")+
+ geom_density(alpha=.2, fill="#E69F00")+
+labs(title="Training set Histogram (Acutal Value)",x="Housing Sales Price", y = "Density")
+```
+
+```{r message=FALSE, warning=FALSE}
+pred.price = cbind(test$Id, pred_tst)
+colnames(pred.price) = c("Id", "SalePrice")
+pred.df = as.data.frame(pred.price)
+head(pred.df,5) 
+```
+
+
+```{r eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+write.csv(final, file="GM_kaggle_sub.csv", row.names = FALSE)
+```
+  
+##### Kaggle & Session Info
+**Kaggle Username: gabbypaola, Score: 0.56114, Rank 9430**
+```{r echo=FALSE, fig.align="center"}
+knitr::include_graphics(rep('/Users/marcosmartinez689/Documents/DATA605/kaggle.jpg'))
+```
+
+Below is the version information about R, the OS and attached or loaded packages for the making of this project. 
+```{r}
+devtools::session_info()
+```
+
